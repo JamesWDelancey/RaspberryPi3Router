@@ -56,24 +56,64 @@ sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 
 sudo chown root:root /etc/network/if-pre-up.d/iptables && sudo chmod +x /etc/network/if-pre-up.d/iptables && sudo chmod 755 /etc/network/if-pre-up.d/iptables
 sudo iptables --flush
+sudo ip6tables --flush
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 sudo iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
-#sudo iptables -A INPUT -i eth0  -p tcp --dport 22 -j ACCEPT
 sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+ip6tables -P INPUT DROP
+ip6tables -P OUTPUT DROP
+ip6tables -P FORWARD DROP
 
+# loopback
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+iptables -A INPUT -d 127.0.0.1 -j ACCEPT
+iptables -A OUTPUT -s 127.0.0.1 -j ACCEPT
+ip6tables -A INPUT -i lo -j ACCEPT
+ip6tables -A OUTPUT -o lo -j ACCEPT
+ip6tables -A INPUT -s ::1 -d ::1 -j ACCEPT
+ip6tables -A OUTPUT -s ::1 -d ::1 -j ACCEPT
+
+# ACCEPT already ESTABLISHED connections
+iptables -A INPUT -p ALL -i eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -p ALL -i eth1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+ip6tables -A INPUT -p ALL -i eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+ip6tables -A INPUT -p ALL -i eth1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# ACCEPT all OUTPUT
+iptables -A OUTPUT -p ALL -o eth0 -j ACCEPT
+iptables -A OUTPUT -p ALL -o eth1 -j ACCEPT
+ip6tables -A OUTPUT -p ALL -o eth0 -j ACCEPT
+ip6tables -A OUTPUT -p ALL -o eth1 -j ACCEPT
+
+# SSH
+iptables -A INPUT -p tcp -i eth1 --dport 22 -m state --state NEW -j ACCEPT
+ip6tables -A INPUT -p tcp -i eth1 --dport 22 -m state --state NEW -j ACCEPT
+
+# ICMP
+iptables -A INPUT -i eth1 -p icmp -m icmp --icmp-type 8 -j ACCEPT
+ip6tables -A INPUT -p ipv6-icmp -j ACCEPT
+ip6tables -A OUTPUT -p ipv6-icmp -j ACCEPT
 
 #sudo iptables -A INPUT -i eth1 -j ACCEPT
 sudo iptables -A INPUT -s 192.168.0.0/16 -i eth0 -j DROP
+sudo iptables -A FORWARD -s 192.168.0.0/16 -i eth0 -j DROP
 sudo iptables -A INPUT -s 10.0.0.0/8 -i eth0 -j DROP
+sudo iptables -A FORWARD -s 10.0.0.0/8 -i eth0 -j DROP
 sudo iptables -A INPUT -s 172.16.0.0/12 -i eth0 -j DROP
+sudo iptables -A FORWARD -s 172.16.0.0/12 -i eth0 -j DROP
 sudo iptables -A INPUT -s 224.0.0.0/4 -i eth0 -j DROP
+sudo iptables -A FORWARD -s 224.0.0.0/4 -i eth0 -j DROP
 sudo iptables -A INPUT -s 240.0.0.0/5 -i eth0 -j DROP
+sudo iptables -A FORWARD -s 240.0.0.0/5 -i eth0 -j DROP
 sudo iptables -A INPUT -s 127.0.0.0/8 -i eth0 -j DROP
-sudo iptables -A INPUT -i eth0 -p tcp -m tcp -j DROP
-sudo iptables -A INPUT -i eth0 -p icmp -m icmp --icmp-type 8 -j DROP
+sudo iptables -A FORWARD -s 127.0.0.0/8 -i eth0 -j DROP
+#sudo iptables -A INPUT -i eth0 -p icmp -m icmp --icmp-type 8 -j DROP
 
 #sudo ip6tables -A INPUT -i eth0 -p tcp -m tcp -j DROP
-sudo ip6tables --flush
 
 sudo sh -c "iptables-save > /etc/iptables/rules.v4"
 sudo sh -c "ip6tables-save > /etc/iptables/rules.v6"
