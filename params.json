@@ -1,0 +1,6 @@
+{
+  "name": "Raspberrypi3router",
+  "tagline": "",
+  "body": "### Welcome to RaspberryPi3Router.\r\nThis script is for setting up a RaspberryPi as a router for your simple network.  It enables IPtables for IPv4 and IPv6, DHCP, and NAT.  I'm working on the IPv6 DHCP PD part to make it automatic.  Currently you have to run a few commands to pull the IPv6 address and set it on the internal interface.\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
