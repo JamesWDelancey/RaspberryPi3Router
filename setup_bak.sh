@@ -4,7 +4,6 @@
 #apt-get -y install iptables-persistent
 #apt-get -y install isc-dhcp-server
 #apt-get -y install git
-apt-get -y install wide-dhcpv6-client
 
 echo 'ddns-update-style none;' > /etc/dhcp/dhcpd.conf
 echo 'authoritative;' >> /etc/dhcp/dhcpd.conf
@@ -45,7 +44,7 @@ echo ' address 10.114.67.254' >> /etc/network/interfaces
 echo ' netmask 255.255.252.0' >> /etc/network/interfaces
 echo 'auto eth0' >> /etc/network/interfaces
 echo 'iface eth0 inet dhcp' >> /etc/network/interfaces
-echo 'iface eth0 inet6 static' >> /etc/network/interfaces
+#echo 'iface eth0 inet6 dhcp' >> /etc/network/interfaces
 echo 'allow-hotplug wlan0' >> /etc/network/interfaces
 echo 'iface wlan0 inet manual' >> /etc/network/interfaces
 echo '    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf' >> /etc/network/interfaces
@@ -54,29 +53,6 @@ echo 'iface wlan1 inet manual' >> /etc/network/interfaces
 echo '    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf' >> /etc/network/interfaces
 #echo 'up iptables-restore < /etc/iptables.ipv4.nat' >> /etc/network/interfaces
 sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
-#echo 'net.ipv6.conf.eth0.accept_ra=2' >> /etc/sysctl.conf
-
-echo 'interface eth0 { # external facing interface (WAN)' > /etc/wide-dhcp6c/dhcp6c.conf
-echo '  send ia-na 1;' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  send ia-pd 1;' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  request domain-name-servers;' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  request domain-name;' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  script "/etc/wide-dhcpv6/dhcp6c-script";' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '};' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo 'id-assoc pd 1 {' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  prefix-interface eth1 { #internal facing interface (LAN)' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '    sla-id 0; # subnet. Combined with ia-pd to configure the subnet for this interface.' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '    ifid 1; #IP address "postfix". if not set it will use EUI-64 address of the interface. Combined with SLA-ID'd prefix to create full IP address of interface.' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '    sla-len 8; # prefix bits assigned. Take the prefix size you're assigned (something like /48 or /56) and subtract it from 64. In my case I was being assigned a /56, so 64-56=8' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '    };' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  };' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  id-assoc na 1 {' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '  # id-assoc for eth1' >> /etc/wide-dhcp6c/dhcp6c.conf
-echo '};' >> /etc/wide-dhcp6c/dhcp6c.conf
-
-
 
 sudo chown root:root /etc/network/if-pre-up.d/iptables && sudo chmod +x /etc/network/if-pre-up.d/iptables && sudo chmod 755 /etc/network/if-pre-up.d/iptables
 sudo iptables --flush
